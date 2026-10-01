@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GENITUS DIVIDEND ARISTOCRATS</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#f4f7fb;--surface:#ffffff;--border:#d9e2ec;--accent:#0e7490;--gold:#b45309;--green:#15803d;--red:#b91c1c;--muted:#52606d;--text:#1e293b;--bright:#0f172a;--mono:'Space Mono',monospace;--sans:'Rajdhani',sans-serif;}
+    :root.dark-theme{--bg:#080c10;--surface:#0d1117;--border:#1e2d3d;--accent:#00d4ff;--gold:#f0c040;--green:#00ff88;--red:#ff3b5c;--muted:#7d92a8;--text:#c8d8e8;--bright:#ffffff;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;min-height:100vh;transition:background .25s,color .25s;}
+    header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:200;}
+    .logo{display:flex;align-items:center;gap:12px;}
+    .logo-mark{width:32px;height:32px;border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:14px;color:var(--accent);}
+    .logo-text{font-family:var(--mono);font-size:13px;letter-spacing:3px;color:var(--bright);}
+    .logo-sub{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--muted);display:block;margin-top:1px;}
+    #themeToggleBtn{background:none;border:1px solid var(--border);color:var(--accent);width:30px;height:30px;border-radius:2px;cursor:pointer;font-size:14px;}
+    .cache-badge{font-family:var(--mono);font-size:9px;letter-spacing:1px;padding:3px 8px;border:1px solid var(--accent);color:var(--accent);border-radius:2px;text-transform:uppercase;}
+    .main{max-width:1200px;margin:0 auto;padding:20px;}
+    .kpi-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:20px;}
+    .kpi-card{flex:1;min-width:140px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:14px 16px;text-align:center;}
+    .kpi-val{font-family:var(--mono);font-size:26px;font-weight:700;}
+    .kpi-lbl{font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:4px;}
+    .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px;}
+    select,input[type="text"]{background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;padding:8px 10px;outline:none;border-radius:2px;}
+    input[type="text"]{width:220px;}
+    .count-badge{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:auto;}
+    table{width:100%;border-collapse:collapse;font-size:12px;background:var(--surface);border:1px solid var(--border);border-radius:4px;overflow:hidden;}
+    th{font-family:var(--mono);font-size:9px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;padding:9px 12px;text-align:right;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;}
+    th:hover{color:var(--accent);}
+    th.sorted{color:var(--accent);}
+    th:first-child,th:nth-child(2){text-align:left;}
+    td{padding:8px 12px;border-bottom:1px solid rgba(125,146,168,0.15);text-align:right;}
+    td:first-child{font-weight:700;color:var(--accent);text-align:left;font-family:var(--mono);}
+    td:nth-child(2){text-align:left;}
+    .badge{display:inline-block;padding:3px 10px;border-radius:12px;font-family:var(--mono);font-size:11px;font-weight:700;}
+    .badge-gold{background:rgba(180,83,9,0.15);color:var(--gold);}
+    .badge-silver{background:rgba(125,146,168,0.2);color:var(--muted);}
+    .badge-bronze{background:rgba(180,120,80,0.15);color:#b4703d;}
+    .disclaimer{font-size:10px;color:var(--muted);line-height:1.6;border-top:1px solid var(--border);padding-top:10px;margin-top:14px;}
+    .loading-line{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:center;padding:50px;}
+  </style>
+</head>
+<body>
+<header>
+  <div class="logo"><div class="logo-mark">A</div><div><span class="logo-text">GENITUS</span><span class="logo-sub">DIVIDEND ARISTOCRATS · GLOBAL</span></div></div>
+  <div style="display:flex;align-items:center;gap:10px"><span class="cache-badge" id="cacheBadge">● lädt...</span><button id="themeToggleBtn" title="Toggle theme">🌙</button></div>
+</header>
+<div class="main">
+  <div class="kpi-row" id="kpiRow"></div>
+  <div class="toolbar">
+    <select id="minStreakSelect" onchange="renderTable()">
+      <option value="10">Min. 10 Jahre (Bronze+)</option>
+      <option value="20">Min. 20 Jahre (Silber+)</option>
+      <option value="25">Min. 25 Jahre (Gold)</option>
+    </select>
+    <select id="exchangeSelect" onchange="renderTable()"><option value="ALL">Alle Börsen</option></select>
+    <input type="text" id="searchInput" placeholder="Symbol oder Name suchen..." oninput="renderTable()">
+    <span class="count-badge" id="countBadge"></span>
+  </div>
+  <table>
+    <thead><tr id="headRow"></tr></thead>
+    <tbody id="bodyRows"><tr><td colspan="6" class="loading-line">Lade Aristokraten-Daten...</td></tr></tbody>
+  </table>
+  <div class="disclaimer">Streak = Anzahl aufeinanderfolgender vollständiger Kalenderjahre mit tatsächlich <b>steigender</b> Jahres-Gesamtdividende (nicht nur gezahlt, nicht nur gleich geblieben). Laufendes Jahr wird bewusst ausgeschlossen (unvollständige Daten). Reine Cache-Auswertung aus 1,6 Mio. historischen Dividendenzahlungen über 83 Börsen — keine Live-Abfrage. Historische Analyse, keine Garantie für künftige Fortsetzung des Streaks, keine Anlageberatung.</div>
+</div>
+<script>
+  const DATA_URL = 'https://raw.githubusercontent.com/Babybounce500/genitus-ticker-cache/main/aristocrats-data.json';
+  (function(){
+    const KEY='genitusTheme:aristocrats';
+    function applyTheme(t){ document.documentElement.classList.toggle('dark-theme', t==='dark'); localStorage.setItem(KEY,t); const btn=document.getElementById('themeToggleBtn'); if(btn) btn.textContent = t==='dark' ? '☀' : '🌙'; }
+    let saved = localStorage.getItem(KEY) || 'light';
+    applyTheme(saved);
+    document.getElementById('themeToggleBtn').addEventListener('click', function(){ applyTheme(document.documentElement.classList.contains('dark-theme')?'light':'dark'); });
+  })();
+
+  let rowsData = [];
+  let sortKey = 'strictGrowthStreak', sortDir = 'desc';
+  const COLUMNS = [
+    {key:'symbol', label:'Symbol'}, {key:'name', label:'Name'}, {key:'exchange', label:'Börse'},
+    {key:'strictGrowthStreak', label:'Streak'}, {key:'firstCompleteYear', label:'Seit'}, {key:'lastCompleteYearTotal', label:'Div. (letztes Jahr)'},
+  ];
+  function badgeFor(streak){
+    if(streak>=25) return '<span class="badge badge-gold">GOLD '+streak+'J</span>';
+    if(streak>=20) return '<span class="badge badge-silver">SILBER '+streak+'J</span>';
+    return '<span class="badge badge-bronze">BRONZE '+streak+'J</span>';
+  }
+  function buildHead(){
+    document.getElementById('headRow').innerHTML = COLUMNS.map(c=>`<th class="${sortKey===c.key?'sorted':''}" onclick="sortBy('${c.key}')">${c.label}${sortKey===c.key?(sortDir==='asc'?' ▲':' ▼'):''}</th>`).join('');
+  }
+  window.sortBy = function(key){ if(sortKey===key){ sortDir=sortDir==='asc'?'desc':'asc'; } else { sortKey=key; sortDir='desc'; } buildHead(); renderTable(); };
+
+  function renderKPIs(){
+    const gold = rowsData.filter(r=>r.strictGrowthStreak>=25).length;
+    const silver = rowsData.filter(r=>r.strictGrowthStreak>=20 && r.strictGrowthStreak<25).length;
+    const bronze = rowsData.filter(r=>r.strictGrowthStreak>=10 && r.strictGrowthStreak<20).length;
+    document.getElementById('kpiRow').innerHTML = `
+      <div class="kpi-card"><div class="kpi-val">${rowsData.length}</div><div class="kpi-lbl">Gesamt (10J+)</div></div>
+      <div class="kpi-card"><div class="kpi-val" style="color:var(--gold)">${gold}</div><div class="kpi-lbl">Gold (25J+)</div></div>
+      <div class="kpi-card"><div class="kpi-val" style="color:var(--muted)">${silver}</div><div class="kpi-lbl">Silber (20-24J)</div></div>
+      <div class="kpi-card"><div class="kpi-val" style="color:#b4703d">${bronze}</div><div class="kpi-lbl">Bronze (10-19J)</div></div>
+    `;
+  }
+
+  function renderTable(){
+    const minStreak = parseInt(document.getElementById('minStreakSelect').value);
+    const ex = document.getElementById('exchangeSelect').value;
+    const q = document.getElementById('searchInput').value.toLowerCase().trim();
+    let rows = rowsData.filter(r=>r.strictGrowthStreak>=minStreak && (ex==='ALL'||r.exchange===ex) && (!q || r.symbol.toLowerCase().includes(q) || r.name.toLowerCase().includes(q)));
+    rows.sort((a,b)=>{
+      const av=a[sortKey], bv=b[sortKey];
+      if(typeof av==='string') return sortDir==='asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+      return sortDir==='asc' ? av-bv : bv-av;
+    });
+    document.getElementById('countBadge').textContent = `${rows.length} Firmen`;
+    document.getElementById('bodyRows').innerHTML = rows.map(r=>`<tr>
+      <td>${r.symbol}</td><td>${r.name}</td><td>${r.exchange}</td>
+      <td>${badgeFor(r.strictGrowthStreak)}</td><td>${r.firstCompleteYear}</td><td>${r.lastCompleteYearTotal}</td>
+    </tr>`).join('');
+  }
+
+  async function loadData(){
+    try{
+      const res = await fetch(DATA_URL);
+      if(!res.ok) throw new Error('HTTP '+res.status);
+      rowsData = await res.json();
+      document.getElementById('cacheBadge').textContent = `● ${rowsData.length} Aristokraten gecacht`;
+      const exchanges = [...new Set(rowsData.map(r=>r.exchange))].sort();
+      const sel = document.getElementById('exchangeSelect');
+      exchanges.forEach(ex=>{ const o=document.createElement('option'); o.value=ex; o.textContent=ex; sel.appendChild(o); });
+      buildHead();
+      renderKPIs();
+      renderTable();
+    }catch(e){
+      document.getElementById('cacheBadge').textContent = '● Fehler';
+      document.getElementById('bodyRows').innerHTML = `<tr><td colspan="6" class="loading-line">Fehler: ${e.message}</td></tr>`;
+    }
+  }
+  loadData();
+</script>
+</body>
+</html>
